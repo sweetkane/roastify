@@ -1,33 +1,33 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useChat } from "ai/react"
+import { Message, useChat } from "ai/react"
 import { ArrowUpIcon } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { AutoResizeTextarea } from "@/components/autoresize-textarea"
-import { useEffect, useRef } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef } from 'react'
 
-export function ChatForm({ className, ...props }: React.ComponentProps<"div">) {
-  const { messages, input, setInput, append } = useChat({
-    api: "/api/chat",
-  })
+interface ChatFormProps extends React.ComponentProps<'form'> {
+  messages: Message[];
+  input: string;
+  setInput: Dispatch<SetStateAction<string>>;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void,
+  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
+}
+
+export function ChatForm({
+  className,
+  messages,
+  input,
+  setInput,
+  handleSubmit,
+  handleKeyDown,
+  ...props
+}: ChatFormProps) {
+
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (input.trim()) {
-      void append({ content: input, role: "user" })
-      setInput("")
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>)
-    }
-  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -81,7 +81,7 @@ export function ChatForm({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     >
       <div className="flex-1 overflow-y-auto">
-        {messages.length ? messageList : header}
+        {messages.filter(m => m.role !== 'system').length ? messageList : header}
       </div>
       <div className="mt-auto">
         <form
